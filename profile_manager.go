@@ -5,6 +5,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
+	"os"
 )
 
 type ProfileManager struct {
@@ -55,12 +56,18 @@ func (pm *ProfileManager) ReloadProfiles() {
 }
 
 func createViperInstance(fType string) *viper.Viper {
+	err := os.MkdirAll("./config", os.ModePerm)
+	if err != nil {
+		log.Error().Err(err).Msg("Unable to create config directory")
+		return nil
+	}
+
 	v := viper.New()
 	v.SetConfigName("profiles")
 	v.SetConfigType(fType)
-	v.AddConfigPath(".") // Path to look for the config file
+	v.AddConfigPath("./config") // Path to look for the config file
 
-	err := v.ReadInConfig()
+	err = v.ReadInConfig()
 	var configFileNotFoundError viper.ConfigFileNotFoundError
 	if errors.As(err, &configFileNotFoundError) {
 		log.Warn().Msg("no profile file not found, creating with default values")
