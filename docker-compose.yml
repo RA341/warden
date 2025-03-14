@@ -1,0 +1,7 @@
+services:
+  warden-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./profiles.yaml:/app/profiles.yaml

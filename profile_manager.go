@@ -68,7 +68,7 @@ func createViperInstance(fType string) *viper.Viper {
 
 		err = v.SafeWriteConfig()
 		if err != nil {
-			log.Error().Err(err).Msg("profile.toml could not be created")
+			log.Error().Err(err).Msg("profile could not be created")
 		}
 	}
 

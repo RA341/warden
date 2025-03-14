@@ -17,6 +17,7 @@ const (
 )
 
 func main() {
+	printInfo()
 	log.Logger = ConsoleLogger()
 	fileType := parseConfigType()
 	pm := NewProfileManager(fileType)
