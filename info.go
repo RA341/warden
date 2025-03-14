@@ -64,7 +64,7 @@ func printInfo() {
 	printField("BuildDate", formatTime(BuildDate))
 	printField("Branch", Branch)
 	printField("CommitInfo", CommitInfo)
-	printField("Source Hash", SourceHash)
+	printField("SourceChecksum", SourceHash)
 	printField("GoVersion", GoVersion)
 
 	//nolint
