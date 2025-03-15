@@ -29,11 +29,11 @@ ENV BRANCH=${BRANCH}
 # build optimized binary without debugging symbols
 RUN SOURCE_HASH=$(find . -type f -name "*.go" -print0 | sort -z | xargs -0 cat | sha256sum | cut -d ' ' -f1) && \
     go build -ldflags "-s -w \
-      -X github.com/RA341/warden/main.Version=${VERSION} \
-      -X github.com/RA341/warden/main.CommitInfo=${COMMIT_INFO} \
-      -X github.com/RA341/warden/main.BuildDate=${BUILD_DATE} \
-      -X github.com/RA341/warden/main.Branch=${BRANCH} \
-      -X github.com/RA341/warden/main.SourceHash=${SOURCE_HASH}" \
+      -X main.Version=${VERSION} \
+      -X main.CommitInfo=${COMMIT_INFO} \
+      -X main.BuildDate=${BUILD_DATE} \
+      -X main.Branch=${BRANCH} \
+      -X main.SourceHash=${SOURCE_HASH}" \
     -o warden
 
 FROM alpine:latest
