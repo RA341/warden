@@ -164,6 +164,31 @@ func (s *SonarrInst) DeleteAndReMonitor(info *SonarMediaInfo) {
 		log.Error().Err(err).Msg(" failed to re-monitor episode")
 		return
 	}
+
+	err = s.SearchEpisodes(info.EpisodeID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to search episode")
+		return
+	}
+}
+
+// SearchEpisodes searches for episodes based on series ID and season number.
+func (s *SonarrInst) SearchEpisodes(epID int) error {
+	resp, err := s.client.R().
+		SetBody(map[string]interface{}{
+			"name":       "EpisodeSearch",
+			"episodeIds": []int{epID},
+		}).
+		Post("/api/v3/command")
+	if err != nil {
+		return fmt.Errorf("error performing request: %w", err)
+	}
+
+	if resp.IsSuccess() {
+		return fmt.Errorf("GET request failed with status code %d: %s", resp.StatusCode(), resp.String())
+	}
+
+	return nil
 }
 
 func (s *SonarrInst) matchProfile(info *SonarMediaInfo) *Profile {

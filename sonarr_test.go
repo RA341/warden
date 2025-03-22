@@ -80,6 +80,15 @@ func TestDelete_Remonitor(t *testing.T) {
 	}
 }
 
+func TestSonarrInst_SearchEpisodes(t *testing.T) {
+	cli := NewSonarrWithEmptyCallback("https://sonar.dumbapps.org", "0d79c87bb0fc4cdd9039d2266519cde3")
+	err := cli.SearchEpisodes(13523)
+	if err != nil {
+		t.Fatalf("Remonitor failed: %v", err)
+		return
+	}
+}
+
 //func(s string) (*Profile, bool) {
 //	return &Profile{
 //		RequiredLanguagesAudio:   []string{"en"},
