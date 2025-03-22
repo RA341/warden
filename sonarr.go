@@ -184,7 +184,7 @@ func (s *SonarrInst) SearchEpisodes(epID int) error {
 		return fmt.Errorf("error performing request: %w", err)
 	}
 
-	if resp.IsSuccess() {
+	if resp.IsError() {
 		return fmt.Errorf("GET request failed with status code %d: %s", resp.StatusCode(), resp.String())
 	}
 
