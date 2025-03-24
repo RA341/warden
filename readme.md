@@ -1,12 +1,11 @@
 # Warden
 
 Your Media's Bodyguard
+
 Tired of Sonarr/Radarr bringing home strays with weird audio and funky subtitles? Warden's got your back!
 
 Because you deserve better than settling in for movie night, only to discover you are watching "Fast & Furious" 
 with Dothraki dubbing and Klingon subtitles.
-
-Wait that actually sounds fun
 
 ## What It Does
 
