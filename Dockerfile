@@ -6,10 +6,6 @@ ARG COMMIT_INFO=unknown
 ARG BUILD_DATE=unknown
 ARG BRANCH=unknown
 
-# for sqlite
-RUN apk update && apk add --no-cache gcc musl-dev
-ENV CGO_ENABLED=1
-
 WORKDIR /app
 
 COPY go.mod .
