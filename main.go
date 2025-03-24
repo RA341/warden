@@ -2,18 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
 )
 
-type contextKey string
-
 const (
-	ProfileManagerKey contextKey = "profileManager"
-	targetHeader                 = "warden-key"
+	targetHeader = "warden-key"
 )
 
 func main() {
@@ -22,65 +17,65 @@ func main() {
 	fileType := parseConfigType()
 	pm := NewProfileManager(fileType)
 
-	e := echo.New()
-	e.HideBanner = true
-	//e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			c.Set(string(ProfileManagerKey), pm)
-			return next(c)
-		}
-	})
-	e.POST("/webhook", handlePayload)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/webhook", handlePayload(pm))
+
+	port := "8080"
+	addr := fmt.Sprintf(":%s", port)
+	server := &http.Server{
+		Addr:    addr,
+		Handler: mux,
+	}
 
 	val := GetOutboundIP()
-	port := "8080"
 	log.Info().Msgf("use http://%s:%s/webhook to send webhooks", val, port)
 
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", port)))
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatal().Err(err).Msg("unable to start server")
+	}
 }
 
-// handlePayload processes incoming requests to the /payload endpoint
-func handlePayload(c echo.Context) error {
-	headers := c.Request().Header
-	headerValue := headers.Get(targetHeader)
-	if headerValue == "" {
-		log.Error().Msg("Missing header: " + targetHeader)
-		return c.String(http.StatusBadRequest, "Missing header: "+targetHeader)
-	}
-
-	tmp := c.Get(string(ProfileManagerKey))
-	if tmp == nil {
-		log.Error().Msg("No profile manager found in context")
-		return echo.NewHTTPError(http.StatusInternalServerError, "No profile manager found in context")
-	}
-
-	pm := tmp.(*ProfileManager)
-	inst, ok := pm.GetProfile(headerValue)
-	if !ok {
-		log.Error().Msgf("No profile found for %s", headerValue)
-		return echo.NewHTTPError(http.StatusBadRequest, "no associated instance was found for key "+headerValue)
-	}
-
-	payload, err := readToBytes(c.Request().Body)
-	if err != nil {
-		log.Error().Err(err).Msg("Error reading payload")
-		return echo.NewHTTPError(http.StatusInternalServerError, "unable to read payload"+err.Error())
-	}
-
-	go func() {
-		if inst.arrClient == nil {
-			log.Error().Msg("client was not initialized")
+func handlePayload(pm *ProfileManager) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Check for required header
+		headerValue := r.Header.Get(targetHeader)
+		if headerValue == "" {
+			log.Error().Msg("Missing header: " + targetHeader)
+			http.Error(w, "Missing header: "+targetHeader, http.StatusBadRequest)
 			return
 		}
-		err := inst.arrClient.ProcessWebhook(payload)
-		if err != nil {
-			log.Error().Err(err).Msgf("Error processing webhook for %s", headerValue)
-		}
-	}()
 
-	return c.NoContent(http.StatusOK)
+		// Get profile based on header value
+		inst, ok := pm.GetProfile(headerValue)
+		if !ok {
+			log.Error().Msgf("No profile found for %s", headerValue)
+			http.Error(w, "no associated instance was found for key "+headerValue, http.StatusBadRequest)
+			return
+		}
+
+		// Read payload
+		payload, err := readToBytes(r.Body)
+		if err != nil {
+			log.Error().Err(err).Msg("Error reading payload")
+			http.Error(w, "unable to read payload: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Process webhook asynchronously
+		go func() {
+			if inst.arrClient == nil {
+				log.Error().Msg("client was not initialized")
+				return
+			}
+			err := inst.arrClient.ProcessWebhook(payload)
+			if err != nil {
+				log.Error().Err(err).Msgf("Error processing webhook for %s", headerValue)
+			}
+		}()
+
+		// Send success response
+		w.WriteHeader(http.StatusOK)
+	}
 }
 
 func readToBytes(reader io.ReadCloser) ([]byte, error) {
