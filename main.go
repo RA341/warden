@@ -37,7 +37,6 @@ func main() {
 
 func handlePayload(pm *ProfileManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Check for required header
 		headerValue := r.Header.Get(targetHeader)
 		if headerValue == "" {
 			log.Error().Msg("Missing header: " + targetHeader)
@@ -45,7 +44,6 @@ func handlePayload(pm *ProfileManager) http.HandlerFunc {
 			return
 		}
 
-		// Get profile based on header value
 		inst, ok := pm.GetProfile(headerValue)
 		if !ok {
 			log.Error().Msgf("No profile found for %s", headerValue)
@@ -53,7 +51,6 @@ func handlePayload(pm *ProfileManager) http.HandlerFunc {
 			return
 		}
 
-		// Read payload
 		payload, err := readToBytes(r.Body)
 		if err != nil {
 			log.Error().Err(err).Msg("Error reading payload")
@@ -61,7 +58,6 @@ func handlePayload(pm *ProfileManager) http.HandlerFunc {
 			return
 		}
 
-		// Process webhook asynchronously
 		go func() {
 			if inst.arrClient == nil {
 				log.Error().Msg("client was not initialized")
@@ -73,7 +69,6 @@ func handlePayload(pm *ProfileManager) http.HandlerFunc {
 			}
 		}()
 
-		// Send success response
 		w.WriteHeader(http.StatusOK)
 	}
 }
